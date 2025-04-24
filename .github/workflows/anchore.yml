@@ -1,0 +1,54 @@
+name: Anchore
+
+on: [push, pull_request]
+
+jobs:
+  generate-sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM with Syft
+        uses: anchore/sbom-action@v0.18.0
+        with:
+          # scanne tout le repo
+          path: .
+          # format JSON (SPDX)
+          format: spdx-json
+          # nom de l’artifact
+          artifact-name: sbom.spdx.json
+          upload-artifact: true
+  scan-sbom:
+    name: SCA Scan (Grype)
+    runs-on: ubuntu-latest
+    needs: generate-sbom
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom.spdx.json
+          path: .
+
+      - name: Scan SBOM with Grype
+        uses: anchore/scan-action@v6.1.0
+        id: sbom_scan
+        with:
+          # pointage sur le SBOM généré
+          sbom: ./sbom.spdx.json
+          # format de sortie JSON
+          output-format: json
+          # écriture du rapport dans ce fichier
+          output-file: sca-report.json
+          # ne pas échouer en cas de vulnérabilités
+          fail-build: false
+
+      - name: Upload SCA report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca-report.json
+          path: sca-report.json

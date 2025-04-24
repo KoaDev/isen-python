@@ -1,0 +1,25 @@
+name: Bandit SAST
+
+on: [push, pull_request]
+
+jobs:
+  sast:
+    name: Static Security Scan (Bandit)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.9" ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
+      - name: Run Bandit SAST scan
+        run: |
+          # recurse through code, exclude test dirs, only report high‑severity issues
+          bandit -r . --exclude unit_tests,integration_tests --severity-level high
