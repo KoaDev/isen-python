@@ -1,44 +1,39 @@
-name: Cypress Tests
+name: Cypress E2E Tests
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
-  cypress-run:
+  cypress-tests:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
-      - name: Install backend dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Django migrations
+      - name: Run Django server in background
         run: |
           python manage.py migrate
-
-      - name: Start Django server
-        run: |
           nohup python manage.py runserver 0.0.0.0:8080 &
         env:
-          DJANGO_SETTINGS_MODULE: occommerce.settings  # Ajuste selon ton settings.py
+          DATABASE_URL: postgres://user:password@localhost:5432/django
 
       - name: Wait for server to be ready
         run: |
-          npx wait-on http://localhost:8080/home
+          sleep 10
+          curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:8080
+
+      - name: Install Cypress
+        run: npm install cypress --save-dev
 
       - name: Run Cypress tests
-        uses: cypress-io/github-action@v6
-        with:
-          start: ''
-          wait-on: 'http://localhost:8080/home'
-          wait-on-timeout: 60
-          browser: chrome  # Ou laisse vide pour Electron par défaut
-
+        run: npx cypress run
