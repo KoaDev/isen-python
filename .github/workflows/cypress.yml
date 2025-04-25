@@ -1,39 +1,17 @@
 name: Cypress Tests
 
-on: [push, pull_request]
+on: push
 
 jobs:
   cypress-run:
-    runs-on: ubuntu-latest
-
-    container:
-      image: cypress/included:13.1.0  # Image officielle tout-en-un
-
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # Install npm dependencies, cache them correctly
+      # and run all Cypress tests
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
         with:
-          python-version: '3.9'
-
-      - name: Install backend dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run Django migrations
-        run: |
-          python manage.py migrate
-
-      - name: Start Django server
-        run: |
-          nohup python manage.py runserver 0.0.0.0:8080
-
-      - name: Wait for Django to be ready
-        run: |
-          npx wait-on http://localhost:8080/home
-
-      - name: Run Cypress tests
-        run: |
-          cypress run --browser chrome
+          build: npm run build
+          start: npm start
