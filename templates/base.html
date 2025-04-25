@@ -11,12 +11,13 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js" crossorigin="anonymous"></script>
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+        <link href="{% static 'css/darkmode.css' %}" rel="stylesheet">
         <!-- Fonts CSS-->
         <link rel="stylesheet" href="{% static 'css/heading.css' %}">
         <link rel="stylesheet" href="{% static 'css/body.css' %}">
         <link rel="stylesheet" href="{% static 'css/profile.css' %}">
     </head>
-    <body id="page-top">
+    <body id="page-top" class="dark-support">
         <nav class="navbar navbar-expand-lg bg-secondary fixed-top" id="mainNav">
             <div class="container"><a class="navbar-brand js-scroll-trigger" href="{% url 'home' %}">OC-commerce</a>
                 <button class="navbar-toggler navbar-toggler-right font-weight-bold bg-primary text-white rounded" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">Menu <i class="fas fa-bars"></i></button>
@@ -34,13 +35,18 @@
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="{% url 'signup' %}">SIGNUP</a>
                         {% endif %}
                         </li>
+                        <li class="nav-item mx-0 mx-lg-1">
+                          <a id="theme-toggle" class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="javascript:void(0)">
+                            🌙
+                          </a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </nav>
         {% block content %}
         {% endblock %}
-        <footer class="footer text-center">
+        <footer class="footer text-center dark-bg dark-text">
             <div class="container">
                 <div class="row">
                     <!-- Footer Location-->
@@ -62,7 +68,7 @@ Clark, MO 65243</p>
             </div>
         </footer>
         <!-- Copyright Section-->
-        <section class="copyright py-4 text-center text-white">
+        <section class="copyright py-4 text-center text-white dark-bg dark-text">
             <div class="container"><small class="pre-wrap">Copyright © Your Website 2020</small></div>
         </section>
         <!-- Scroll to Top Button (Only visible on small and extra-small screen sizes)-->
@@ -101,6 +107,21 @@ Clark, MO 65243</p>
                 },
               });
             }
+          </script>
+          <script>
+            (function() {
+              const toggle = document.getElementById('theme-toggle');
+              // Récupère le thème stocké ou défaut "light"
+              const stored = localStorage.getItem('theme') || 'light';
+              document.documentElement.classList.toggle('dark-mode', stored === 'dark');
+              toggle.textContent = stored === 'dark' ? '☀️' : '🌙';
+
+              toggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark-mode');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                toggle.textContent = isDark ? '☀️' : '🌙';
+              });
+            })();
           </script>
     </body>
 </html>
