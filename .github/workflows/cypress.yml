@@ -2,7 +2,8 @@ name: Cypress Tests
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -23,27 +24,22 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         run: |
           pip install -r requirements.txt
-
-      - name: Install wait-on
-        run: |
-          npm install -g wait-on
+          npm install -g wait-on cypress
 
       - name: Run Django migrations
-        run: |
-          python manage.py migrate
+        run: python manage.py migrate
 
       - name: Start Django server
         run: |
           nohup python manage.py runserver 0.0.0.0:8080 &
         env:
-          DJANGO_SETTINGS_MODULE: Project.settings  # <- adapte à ton vrai module settings
+          DJANGO_SETTINGS_MODULE: Project.settings  # adapte si ton module est différent
+
+      - name: Wait for Django to be ready
+        run: wait-on http://localhost:8080/home
 
       - name: Run Cypress tests
-        uses: cypress-io/github-action@v6
-        with:
-          start: ''
-          wait-on: 'http://localhost:8080/home'
-          wait-on-timeout: 60
+        run: npx cypress run --browser chrome
