@@ -1,0 +1,43 @@
+name: Cypress Tests
+
+on: [push, pull_request]
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Django migrations
+        run: |
+          python manage.py migrate
+
+      - name: Start Django server
+        run: |
+          nohup python manage.py runserver 0.0.0.0:8080 &
+        env:
+          DJANGO_SETTINGS_MODULE: occommerce.settings  # adapte si ton projet a un autre nom de settings
+
+      - name: Wait for Django to be ready
+        run: |
+          npx wait-on http://localhost:8080/home
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          start: ''
+          wait-on: 'http://localhost:8080/home'
+          wait-on-timeout: 60
+          browser: chrome
