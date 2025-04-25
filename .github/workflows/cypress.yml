@@ -1,19 +1,49 @@
-name: Cypress Tests using Cypress Docker Image
+name: Cypress Tests
 
-on: push
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   cypress-run:
-    runs-on: ubuntu-24.04
-    container:
-      image: cypress/browsers:22.12.0
-      options: --user 1001
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Cypress run
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install backend dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install wait-on
+        run: |
+          npm install -g wait-on
+
+      - name: Run Django migrations
+        run: |
+          python manage.py migrate
+
+      - name: Start Django server
+        run: |
+          nohup python manage.py runserver 0.0.0.0:8080 &
+        env:
+          DJANGO_SETTINGS_MODULE: Project.settings  # <- adapte à ton vrai module settings
+
+      - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
-          build: npm run build
-          start: npm start
-          browser: chrome
+          start: ''
+          wait-on: 'http://localhost:8080/home'
+          wait-on-timeout: 60
