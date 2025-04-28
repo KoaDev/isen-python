@@ -1,14 +1,9 @@
-# ------------------------------------------------------------------------------
-#  DAST - OWASP ZAP baseline scan (60 s) sur l'application démarrée en Docker
-#  • Ne tourne que sur la branche par défaut (ici : main)
-#  • Lève au plus le niveau PASS  (-l PASS)  ➜ n'échoue pas sur les alertes
-#  • Le job est « allow-failure »   (continue-on-error: true)
-#  • Rapports JSON archivés en artifact  zap-report
-# ------------------------------------------------------------------------------
-
 name: security-dast
 
-on: [push]
+on:
+  push:
+    branches:
+      - main          # ⬅️  branche par défaut uniquement
 
 permissions:
   contents: read
@@ -16,55 +11,37 @@ permissions:
 
 jobs:
   zap-baseline:
-    name: "OWASP ZAP – baseline (60s)"
+    name: "OWASP ZAP – baseline (60 s)"
     runs-on: ubuntu-latest
-    # 🚦 Le job NE bloque PAS la pipeline même en cas d'erreur
-    continue-on-error: true
+    continue-on-error: true     # le job ne bloque pas la pipeline
 
     steps:
-      # 1) Récupération du code
       - uses: actions/checkout@v4
 
-      # 2) Construction de l'image Docker de l'app
-      - name: Build application image
-        run: |
-          docker build -t isen-python:latest .
+      - name: Build app image
+        run: docker build -t isen-python:latest .
 
-      # 3) Lancement du conteneur en arrière-plan
-      - name: Run application container
-        run: |
-          docker run -d --name classcapture \
-            -p 8080:8080 isen-python:latest
+      - name: Run app container
+        run: docker run -d --name classcapture -p 8080:8080 isen-python:latest
 
-      # 4) Attente que l'API réponde
       - name: Wait until the app is up
         run: |
           for i in {1..24}; do
-            if curl -sSf http://localhost:8080/ >/dev/null; then
-              echo "✅ App is up"
-              exit 0
-            fi
-            echo "⌛ Waiting for the app…"
+            if curl -sSf http://localhost:8080/ > /dev/null; then exit 0; fi
             sleep 5
           done
-          echo "❌ App did not start in time" >&2
+          echo "App did not start in time" >&2
           docker logs classcapture || true
           exit 1
 
-      # 5) DAST : scan baseline 60 s, niveau alerte « PASS »
-      - name: ZAP baseline scan (60s)
+      - name: ZAP baseline scan (60 s)
         uses: zaproxy/action-baseline@v0.9.0
         with:
           target: 'http://localhost:8080'
-          # -t 60 : temps max de scan (s) — baseline se limite déjà aux tests légers
-          # -j    : génère un rapport JSON
-          # -l PASS : ne considère que les alertes > PASS pour fixer le code de sortie
-          # -I    : ignore les alertes INFO loguées par défaut
-          cmd_options: '-t 60 -j -l PASS -I'
+          cmd_options: '-m 1 -j -l PASS -I'
 
-      # 6) Archivage du rapport JSON
       - name: Upload ZAP report
-        if: always()                # on uploade même si le scan échoue
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-report
