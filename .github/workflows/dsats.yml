@@ -1,0 +1,38 @@
+name: security-dast
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build app image
+        run: docker build -t isen-python:latest .
+
+      - name: Run app container
+        run: docker run -d --name classcapture -p 8080:8080 isen-python:latest
+
+      - name: Wait until the app is up
+        run: |
+          for i in {1..24}; do
+            curl -sSf http://localhost:8080/ >/dev/null && exit 0
+            sleep 5
+          done
+          echo "App did not start in time" >&2
+          docker logs classcapture || true
+          exit 1
+
+      - name: ZAP baseline scan (60 s)
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://localhost:8080'
+          cmd_options: '-m 1 -j -l PASS -I'
