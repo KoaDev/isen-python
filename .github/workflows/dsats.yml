@@ -35,5 +35,5 @@ jobs:
         uses: zaproxy/action-baseline@v0.9.0
         with:
           target: 'http://localhost:8080'
-          artifact_name: zap-report      # ← nom sans underscore
+          artifact_name: zapreport      # ← nom sans underscore
           cmd_options: '-m 1 -j -l PASS -I'
