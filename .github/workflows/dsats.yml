@@ -1,9 +1,6 @@
 name: security-dast
 
-on:
-  push:
-    branches:
-      - main          # ⬅️  branche par défaut uniquement
+on: [push, pull_request]
 
 permissions:
   contents: read
