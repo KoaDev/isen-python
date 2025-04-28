@@ -35,7 +35,8 @@ jobs:
         uses: zaproxy/action-baseline@v0.9.0
         with:
           target: 'http://localhost:8080'
-          cmd_options: '-m 1 -j -l PASS -I'
+          github_token: ''
+          cmd_options: '-m 1 -j -l
 
       - name: Upload ZAP report
         if: always()
