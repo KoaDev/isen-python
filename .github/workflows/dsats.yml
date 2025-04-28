@@ -4,14 +4,13 @@ on: [push, pull_request]
 
 permissions:
   contents: read
-  security-events: write
-  issues: write          # 🆕 pour que ZAP puisse ouvrir/éditer un ticket
+  security-events: write  # Seulement nécessaire si vous voulez toujours les alertes de sécurité
 
 jobs:
   zap-baseline:
     name: "OWASP ZAP – baseline (60 s)"
     runs-on: ubuntu-latest
-    continue-on-error: true        # n’interrompt jamais la CI
+    continue-on-error: true  # Ne pas interrompre le workflow en cas d'échec
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +35,9 @@ jobs:
         uses: zaproxy/action-baseline@v0.9.0
         with:
           target: 'http://localhost:8080'
-          cmd_options: '-m 1 -j -l PASS -I'   # 1 min, rapport JSON, niveau PASS
+          cmd_options: '-m 1 -j -l PASS -I'  # 1 min, rapport JSON, niveau PASS
+          fail_action: false  # Empêche la création d'issues
+          create_issue: false  # Désactive explicitement la création d'issues
 
       - name: Upload ZAP report
         if: always()
