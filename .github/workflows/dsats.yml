@@ -5,12 +5,13 @@ on: [push, pull_request]
 permissions:
   contents: read
   security-events: write
+  issues: write          # 🆕 pour que ZAP puisse ouvrir/éditer un ticket
 
 jobs:
   zap-baseline:
     name: "OWASP ZAP – baseline (60 s)"
     runs-on: ubuntu-latest
-    continue-on-error: true     # le job ne bloque pas la pipeline
+    continue-on-error: true        # n’interrompt jamais la CI
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +25,7 @@ jobs:
       - name: Wait until the app is up
         run: |
           for i in {1..24}; do
-            if curl -sSf http://localhost:8080/ > /dev/null; then exit 0; fi
+            curl -sSf http://localhost:8080/ > /dev/null && exit 0
             sleep 5
           done
           echo "App did not start in time" >&2
@@ -35,8 +36,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.9.0
         with:
           target: 'http://localhost:8080'
-          github_token: ''
-          cmd_options: '-m 1 -j -l
+          cmd_options: '-m 1 -j -l PASS -I'   # 1 min, rapport JSON, niveau PASS
 
       - name: Upload ZAP report
         if: always()
